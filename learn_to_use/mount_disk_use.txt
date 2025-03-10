@@ -1,0 +1,100 @@
+查询挂载情况------------------------------------------------------------------------------
+lsblk			查看挂载情况,例如：
+			NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+			sda           8:0    1  14.9G  0 disk 
+			└─sda1        8:1    1  14.9G  0 part /media/std330/____Զ
+			nvme0n1     259:0    0 476.9G  0 disk 
+			├─nvme0n1p1 259:1    0    16M  0 part 
+			├─nvme0n1p2 259:2    0   513M  0 part /boot/efi
+			├─nvme0n1p3 259:3    0  74.5G  0 part /
+			└─nvme0n1p4 259:4    0  14.9G  0 part [SWAP]
+			nvme1n1     259:5    0 953.9G  0 disk 
+			├─nvme1n1p1 259:6    0   100M  0 part 
+			├─nvme1n1p2 259:7    0    16M  0 part 
+			├─nvme1n1p3 259:8    0 475.9G  0 part 
+			├─nvme1n1p4 259:9    0   608M  0 part 
+			└─nvme1n1p5 259:10   0 477.3G  0 part 
+	sda中的a指的是此盘为SCSI硬盘的第一个，如果有多个就会是 sdb sdc sde .....
+	sda1中的1指的是该盘下的第一个分区，如果有多个那么就是 sda2 sda3 sda4 ....
+	nvme0n1中的0指的是NVME硬盘的第一个,如果有多个就会是 nvme1n1 nvme2n1 nvme3n1 .....
+	nvme0n1p1中的p1指的是第一个分区，如果有多个就会是 nvme0n1p2 nvme0n1p3 ......
+	还有IDE这类的硬盘，名字就为hda hdb hdc hde..... 分区就为 hda1 hda2 hda3 ....
+	所谓的MOUNTPOINTS 就是分区的挂载点，如果没有就是没有挂载到linux
+lsblk -f		查看挂载详细信息，例如：
+			NAME        FSTYPE FSVER LABEL             UUID                                 FSAVAIL FSUSE% MOUNTPOINTS
+			sda                                                                                            
+			└─sda1      vfat   FAT32 \xce\xe2\xbf\xc9Զ A36C-9DDA                               6.9G    53% /media/std330/____Զ
+			nvme0n1                                                                                        
+			├─nvme0n1p1                                                                                    
+			├─nvme0n1p2 vfat   FAT32                   E9A6-348E                             506.2M     1% /boot/efi
+			├─nvme0n1p3 ext4   1.0                     5132331d-6080-4425-b619-869da2e101fd     61G    11% /
+			└─nvme0n1p4 swap   1                       79c5f336-8dab-4895-9ca7-a795d9d97c8d                [SWAP]
+			nvme1n1                                                                                        
+			├─nvme1n1p1 vfat   FAT32                   3EFE-24EE                                           
+			├─nvme1n1p2                                                                                    
+			├─nvme1n1p3 ntfs                           C8840E60840E50FC                                    
+			├─nvme1n1p4 ntfs                           E0CAD742CAD7141E                                    
+			└─nvme1n1p5 ntfs         新加卷            406ACAE86ACADA34                                    
+	FSTYPE 文件类型
+	UUID 分区的唯一标识符
+	MOUNTPOINTS 挂载点
+
+
+添加新磁盘对其分区并挂载------------------------------------------------------------------------
+fdisk			通过fdisk工具对磁盘进行分区
+			首先要使用lsblk查看新插入的磁盘名，或是对未分配的空间进行分区，例如如下磁盘：
+				NAME        MAJ:MIN RM   SIZE RO TYPE MOUNTPOINTS
+				nvme0n1     259:0    0 476.9G  0 disk 
+				├─nvme0n1p1 259:1    0    16M  0 part 
+				├─nvme0n1p2 259:2    0   513M  0 part /boot/efi
+				├─nvme0n1p3 259:3    0  74.5G  0 part /
+				└─nvme0n1p4 259:4    0  14.9G  0 part [SWAP]
+			可以看到这个磁盘一共476.9G 而p1到p4远远达不到，所以有空间来分配
+	fdisk /dev/nvme0n1	所以要对这个磁盘进行分区 可以输入： fdisk /dev/nvme0n1 （因为所有的硬件都在/dev目录下）
+			进入fdisk程序后输入m获取帮助
+			要想添加分区，要输入n进入分区功能 
+				输入分区号（假设输入的7那么分区就是nvme0n1p7）
+				输入分区的起始位置（默认就好）
+				输入分区大小（可以是+12G +100M +1T -3G ,其中+表示向后的空间，-表示从起始位置向前的空间）
+			分好区之后需要输入w将刚才的分区操作从内存写入到硬盘中
+			保存好之后分区就会生成唯一的UUID
+mkfs -t ext4 /dev/nvme0n1p5	在使用该分区前需要对分区格式化，这里使用的是mkfs指令 ext4表示的是分区类型 后面nvme0n1p5是刚才我们新创建的分区名
+mount /dev/nvme0n1p5 /home/disk1	接下来就是把分区挂载到目录中，指令：mount 设备名称 挂载目录（这种挂载是临时的，重启系统后会消失）
+umount /dev/nvme0n1p5		解除分区的挂载，指令： umount 设备名/挂载目录名（解除挂载的时候推出挂载的目录）
+
+
+永久挂载------------------------------------------------------------------------------------------
+修改/etc/fstab 文件以实现永久挂载
+	文件中的内容如下：
+	# <file system>				 <mount point>   <type>  <options>       <dump>  <pass>
+	UUID=5132331d-6080-4425-b619-869da2e101fd /               ext4    errors=remount-ro 0       1
+	UUID=79c5f336-8dab-4895-9ca7-a795d9d97c8d none            swap    sw              0       0
+	UUID=E9A6-348E  /boot/efi       vfat    umask=0077      0       1
+	这里分别是硬盘的UUID 挂载点 分区类型 
+这里加一行： /dev/nvme0n1p5 /home/disk1 ext4 defaults 0 0
+这样就永久加载了该硬盘分区
+
+
+查询磁盘空间使用情况---------------------------------------------------------------------------------
+df -h			查看所有磁盘空间使用情况
+du -h --max-depth=1 目录	查询对应目录所在的磁盘空间使用情况
+			参数：
+				-h 带计量单位（比如M G K）
+				-s 指定目录占用大小汇总
+				-c 列出明细的同时，增加汇总值
+				--max-depth=1 设置子目录深度为1
+				-a 含文件
+du -h -max-depth=1 目录	查看该目录及下一层子目录的大小
+du -ah -max-depth=1 目录 查看该目录及目录下的文件大小和子目录大小
+
+统计目录下的文件个数--------------------------------------------------------------------------------
+ls -l 目录 | grep "^-" 		显示目录下的文件列表（使用的是grep "^-" 过滤出的文件，因为ls -l显示的文件都是以-开头的，如果是d开头就是目录
+ls -l 目录 | grep "^d"		显示目录下的子目录列表
+ls -l 目录 | grep "^-" | wc -l	统计目录下的文件数量
+ls -l 目录 | grep "^d" | wc -l	统计目录下的子文件夹数量
+ls -lR 目录 | grep "^-" | wc -l	递归统计目录下的文件数量
+ls -lR 目录 | grep "^d" | wc -l	递归统计目录下的子文件夹数量
+tree 目录			使用树状的形式显示目录中的文件和文件夹
+				没有安装tree指令的可以： yum install tree 安装tree指令
+tree 目录 | more		配合more浏览树状图
+

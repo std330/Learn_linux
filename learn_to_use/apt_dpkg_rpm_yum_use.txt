@@ -1,0 +1,55 @@
+dpkg是ubuntu linux系列的系统使用的安装包管理指令
+apt是类似yum的前端软件包管理工具，可以通过从固定服务器中下载包来安装，类似于软件商店
+
+
+在 /etc/apt/source.list 文件中修改源（注意备份本文件）
+sudo cp /etc/apt/source.list /etc/apt/source.list.backup	保存备份
+使用apt安装软件------------------------------------------------------------------------------
+sudo apt-get update			更新源（在更新完source.list文件后要运行update）
+sudo apt-get install packagename	安装包
+sudo apt-get remove packagename		删除包
+sudo apt-get source packagename		下载该包的源代码
+
+sudo apt-cache search packagename	搜索软件包
+sudo apt-cache show packagename		获取包的相关信息，例如：大小，版本
+
+sudo apt-get -f install			修复安装
+sudo apt-get install packagename --reinstall	重新安装包
+sudo apt-get remove package --purge	删除包，包括配置文件等
+
+sudo apt-get build-dep packagename	安装相关的编译环境
+sudo apt-get upgrade			更新已安装的包
+sudo apt-get dist-upgrade		升级系统
+sudo apt-cache depends packagename	了解使用该包依赖哪些包
+sudo apt-cache rdepends packagename	查看该包被哪些包依赖
+
+
+使用dpkg安装本地deb安装包--------------------------------------------------------------------
+dpkg -i 安装包名		安装本地下载好的deb安装包
+
+
+
+rpm似乎是红帽linux系列的系统使用的安装包管理指令
+yum是shell前端软件包管理工具，可以从固定的服务器中下载安装rpm包,类似于软件商店
+	yum会自动处理软件包的依赖关系，安装所需的所有相关软件包（rpm指令并不会）
+
+
+rpm包的查询----------------------------------------------------------------------------------
+rpm -qa				查询所有安装的软件
+rpm -qa | grep firefox		查询是否安装火狐浏览器
+rpm -q 软件包名			查询软件是否安装
+rpm -qi 软件包名		查询软件包信息
+rpm -ql 软件包名		查询软件包中的文件,即文件安装到哪里了
+rpm -qf 文件全路径名		查询文件所属的软件包
+
+删除rpm包（卸载软件）-----------------------------------------------------------------
+rpm -e 软件包名			删除软件包
+rpm -e --nodeps 软件包名	强制删除软件包，因为有些其他的软件包是依赖与要删除的软件包，所以无法直接删除，需要强制删除（慎重）
+
+安装rpm包（安装软件）------------------------------------------------------------------
+rpm -ivh rpm包全路径名称	安装rpm包，i表示install安装，v表示verbose百分比提示，h表示hash进度条
+
+
+yum的相关指令------------------------------------------------------------------
+yum list |grep 软件名		查询yum服务器中是否有要安装的软件
+yum install 软件包名		安装指定的软件包

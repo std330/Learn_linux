@@ -1,0 +1,181 @@
+
+查看进程信息--------------------------------------------------------------------------------
+ps 选项			查看进程信息
+			选项：	-a 显示当前终端的所有进程信息
+				-u 以用户的格式显示进程信息
+				-x 显示后台运行进程的参数
+ps -aux			查看进程信息
+			USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+			root           1  0.0  0.0 168344 12876 ?        Ss   09:57   0:00 /sbin/init
+			root           2  0.0  0.0      0     0 ?        S    09:57   0:00 [kthreadd]
+			root           3  0.0  0.0      0     0 ?        I<   09:57   0:00 [rcu_gp]
+			root          11  0.0  0.0      0     0 ?        I    09:57   0:00 [rcu_tasks_kthread]
+			root         144  0.0  0.0      0     0 ?        SN   09:57   0:00 [ksmd]
+			root         438  0.0  0.0  65980 34056 ?        Ss   09:57   0:00 /lib/systemd/systemd-journald
+			systemd+     831  0.0  0.0  90092  6840 ?        Ssl  09:57   0:00 /lib/systemd/systemd-timesyncd
+			root         838  0.0  0.0 237444  9760 ?        Ssl  09:57   0:00 /usr/libexec/accounts-daemon
+			avahi        846  0.0  0.0   8292  3904 ?        Ss   09:57   0:00 avahi-daemon: running [LINUX-DEBIAN12-DESKTOP.local]
+			root         969  6.1  0.2 801272 131492 tty7    Ssl+ 09:57   7:21 /usr/lib/xorg/Xorg -nolisten tcp -auth /var/run/sddm/{f5897713-e9ea-4b7c-ae5b-aa66460e4732} -background none -noreset -displayfd 17 -seat seat0 vt7
+			rtkit       1071  0.0  0.0  22700  1476 ?        SNsl 09:57   0:00 /usr/libexec/rtkit-daemon
+			std330      1432  0.2  0.0 996900 39212 ?        S<sl 09:58   0:18 /usr/bin/pulseaudio --daemonize=no --log-target=journal
+			std330      1434  0.0  0.0 240176 11856 ?        SLsl 09:58   0:00 /usr/bin/gnome-keyring-daemon --foreground --components=pkcs11,secrets --control-directory=/run/user/1000/keyring
+			std330      1513  0.5  0.1 550452 114156 ?       Sl   09:58   0:37 /usr/bin/fcitx5 -d
+			std330      2005  0.5  0.2 1512808 176628 ?      Rl   09:58   0:36 /usr/bin/konsole
+			std330     16102  200  0.0  12680  5400 pts/1    R+   11:56   0:00 ps -aux
+		这里USER表示打开进程的用户 PID表示唯一的进程号 CPU MEM表示cpu内存占用率
+		VSZ表示虚拟内存使用量 RSS表示物理内存使用量 TTY表示终端信息
+		STAT表示进程状态：S表示睡眠 R表示正在运行
+		START表示进程的开始时间 TIME表示进程占用的CPU时间
+		COMMAND 进程名/执行该进程的指令
+
+
+查看进程和它的父进程----------------------------------------------------------------------------
+ps -ef | grep ssh	查看进程和其父进程
+			结果如下 其中PPID就是该进程的父进程的UID 如果PPID是0那么该进程就没有父进程（当然可能有多级继承）
+			UID          PID    PPID  C STIME TTY          TIME CMD
+			root         979       1  0 11:46 ?        00:00:00 sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+			std330      1548    1496  0 11:47 ?        00:00:00 /usr/bin/ssh-agent /usr/bin/im-launch /usr/bin/startplasma-x11
+			std330      1639    1467  0 11:47 ?        00:00:00 /usr/libexec/gcr-ssh-agent /run/user/1000/gcr
+			std330      5396    2474  0 11:52 pts/1    00:00:00 grep ssh
+
+
+终止进程----------------------------------------------------------------------------------------
+kill 选项 进程号	终止进程
+			例子：ps -aux | grep sshd 查找到非法登陆的用户的进程号 kill 1234 通过终止进程来踢出非法登陆的用户
+			例子：ps -aux | grep sshd 查找到sshd服务的进程号（如下所示为979) kill 979 通过终止sshd进程来关闭sshd远程登陆
+				找到如下内容：root 979 0.0 0.0 15420 8776 ? Ss 11:46 0:00 sshd: /usr/sbin/sshd -D [listener] 0 of 10-100 startups
+				要想恢复sshd服务可以：/bin/systemctl start sshd.service 或 systemvtl start sshd.service
+kill -9 进程号		强制终止进程
+			例子：ps -aux | grep bash 查找运行中的终端 kill -9 1234 通过强制终止来关闭终端
+killall 进程名称	终止进程和其子进程
+			例子：ps -aux | grep goodbye.cpp 查找打开goodbye.cpp的文本编辑器的名称 killall kate 关闭所有的kate文本编辑器
+
+
+查看进程树---------------------------------------------------------------------------------------
+pstree 选项		显示进程树
+pstree -p		显示进程的PID
+pstree -u		显示进程所属用户
+
+
+服务管理-----------------------------------------------------------------------------------------
+所谓的服务就是后台进程/守护进程 比如sshd服务，通过22端口来远程登陆linux
+centos7.0后通过systemctl指令来管理服务，很多的服务不再通过service指令来管理了，还能通过service管理的指令在ls /etc/init.d/ 中查看
+service networking status	查看网络服务状态（使用service指令）
+systemctl status networking	查看网络服务状态（使用systemctl指令）
+				还可以是start restart stop reload status （开启 重启 停止 重载 查看状态）
+systemctl list-units --type=service --all	查看所有的服务
+
+
+开机过程------------------------------------------------------------------------------------------
+开机 -> BIOS -> /boot引导程序 -> systemd程序启动（最先启动的进程）-> 确定运行级别 -> 运行该级别的服务
+			运行级别说明-----------------------------------------------------------------
+			0	停机模式（开机后切换到0级别会自动关机）
+			1	单用户（用于找回丢失密码）
+			2	多用户状态没有网络服务
+			3	多用户状态有网络服务
+			4	系统未使用的运行级别，保留给用户使用
+			5	图形界面
+			6	系统重启
+			常用运行级别是3和5,可以指定默认运行级别
+			
+			指定运行级别-----------------------------------------------------------------
+			init 3		切换到运行级别3（这时候就没有图形界面了）
+			init 0		切换到运行级别0（也就是关机）
+			init 6		切换到运行级别6（也就是重启）
+			init 5		切换到运行级别5（也就是切换到图形界面）
+			
+			设置默认运行级别-------------------------------------------------------------
+			systemctl set-default multi-user.target		将运行级别设为3（多用户状态有网络服务）
+			systemctl set-default graphical.target		将运行级别设为5（图形化界面）
+			systemctl get_default				查询当前所在的运行级别
+chkconfig		在centos7.0之前使用这个指令来管理服务的自启动（即在什么运行级别下哪些服务会自启动/关闭）
+chkconfig --list	显示chkconfig管理的服务在各个运行级别下的自启动情况
+chkconfig --level 5 服务名 on/off 将运行级别5下的服务改为启动on或不启动off
+
+systemctl 选项 服务名	根据选项来管理服务,这里的设置是临时性的不会影响开机的服务自启动情况
+			选项： status start restart stop (查看状态 启动 重启 停止）
+ls /usr/lib/systemd/system	查看systemctl所管理的服务
+systemctl list-unit-files	查看各个服务的自启动情况
+systemctl enable 服务名		设置服务自启动（centos7.0之后这种修改默认修改的是运行级别3和5）
+systemctl disable 服务名	设置服务不自启动（centos7.0之后这种修改默认修改的是运行级别3和5）
+systemctl is-enabled 服务名	查询服务是否是自启动 注意这里的服务名要是全面，例如：如果是firewalld.service 需要输入firewalld 
+				注意这里查询的是自启动情况，并不是当前是否启动 想要查询当前该服务的情况请使用：systemctl status 服务名 来查看
+
+
+管理防火墙和端口------------------------------------------------------------------------------------
+在访问服务器的时候需要保证端口是打开的，这样才能使用端口后面的服务，需要在防火墙中设置哪些端口是打开的，如果关闭了防火墙或关闭了防火墙服务，那么所有端口都会被打开
+netstat | more		查看打开的端口和端口对应的协议
+			这里proto表示的就是协议，local Address表示的就是端口号 State表示的就是端口状态
+			Proto Recv-Q Send-Q Local Address           Foreign Address         State      
+			tcp        0      0 LINUX-DEBIAN12-DE:38388 93.56.204.221.ads:https ESTABLISHED
+			tcp        0      0 LINUX-DEBIAN12-DE:33272 27.222.0.165:7826       ESTABLISHED
+			tcp        0      0 LINUX-DEBIAN12-DE:48464 93.243.107.34.bc.:https ESTABLISHED
+firewall-cmd --permanent --add-port=端口号/协议		打开端口
+firewall-cmd --permanent --aad-port=111/tcp		打开111端口并使用tcp协议（注意reload生效）
+firewall-cmd --permanent --remove-port=端口号/协议	关闭端口
+firewall-cmd --permanent --remove-port=111/tcp		关闭111端口（注意reload)
+firewall-cmd --reload					重新载入才能生效
+firewall-cmd --query-port=端口/协议			查询端口是否开放
+telnet 192.168.2.207 111				在windows中访问该ip的111端口
+
+
+动态监控进程---------------------------------------------------------------------------------------
+top 选项		查看进程情况（类似于任务管理器）
+			选项：
+				-d 秒数 每隔多少秒更新一次信息
+				-i 使top不显示闲置和僵死的进程
+				-p 通过指定ID来监控某个进程的状态
+			以下为top的信息
+			top - 17:41:04 up  5:54,	2 users,	load average: 0.97, 1.05, 1.17
+		########当前时间           系统运行时间	当前登陆用户数	所有CPU线程的负载之和
+			任务: 340 total,   1 running, 	339 sleeping,  	0 stopped,   	0 zombie
+		########当前任务总数	   正在运行任务	睡眠任务	停止任务	僵尸任务
+			%Cpu(s):  0.0 us,    5.3 sy,  0.0 ni, 94.7 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st 
+		########cpu占用率 用户占用率 系统占用
+			MiB Mem :  64203.0 total,  58041.2 free,   4020.2 used,   2910.3 buff/cache
+			MiB Swap:  15259.0 total,  15259.0 free,      0.0 used.  60182.8 avail Mem
+			
+			进程号 USER      PR  NI    VIRT    RES    SHR    %CPU  %MEM     TIME+ COMMAND
+			18083 std330    20   0 4322760 702968 304104 S  18.8   1.1  34:28.02 firefox-esr
+			17473 root      20   0  947468 134120  83664 S  12.5   0.2  10:08.29 Xorg
+			17781 std330    20   0 1741748 228292 144940 S   6.2   0.3   6:43.72 kwin_x11
+			18346 std330    20   0 3329976 551420 163912 S   6.2   0.8  30:33.87 Isolated Web Co
+按下P 使用cpu占有率排序
+按下M 使用内存占用排序
+按下N 以PID排序
+按下q 退出top
+按下u 按下u后输入用户名 可以监控特定用户的进程
+按下k 然后输入进程的ID 可以结束进程（在输入9那么是强制终止)
+
+
+网络监控------------------------------------------------------------------------------------------------
+netstat 选项		查看系统网络情况
+			选项：	-an 按一定顺序排列输出
+				-p 显示哪个进程在调用
+			下面就是netstat的信息：
+			Active Internet connections (servers and established)
+			Proto Recv-Q Send-Q Local Address           Foreign Address         State      
+			tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN     
+			tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN     
+			tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN     
+			tcp        0      0 192.168.2.207:48400     116.162.152.187:443     ESTABLISHED
+			tcp        0      0 192.168.2.207:60786     221.15.71.65:443        ESTABLISHED
+			tcp        0      0 192.168.2.207:34752     27.222.0.173:7826       ESTABLISHED
+			tcp        0      0 192.168.2.207:59932     34.107.243.93:443       ESTABLISHED
+			tcp        0      0 192.168.2.207:43182     218.60.18.10:443        ESTABLISHED
+			tcp        0      0 192.168.2.207:43272     140.206.235.70:443      ESTABLISHED
+			tcp        0      0 192.168.2.207:59944     34.107.243.93:443       ESTABLISHED
+			tcp        0      0 192.168.2.207:58214     221.15.71.65:443        ESTABLISHED
+			tcp6       0      0 :::1716                 :::*                    LISTEN     
+			tcp6       0      0 :::22                   :::*                    LISTEN     
+			tcp6       0      0 :::80                   :::*                    LISTEN     
+			tcp6       0      0 ::1:631                 :::*                    LISTEN
+		proto表示使用的协议 tcp表示ipv4的tcp连接 tcp6表示使用的是ipv6的tcp连接,udp和udp6同理
+		local address表示本地建立连接的端口号
+		其中192.168.2.207:48400 其中48400就是端口号，下面:::22里面的22就是端口号（只不过是ipv6的形式），同一个端口可以接听多个连接。
+		foreign address表示连接到本地端口的对面的ip地址和端口号
+		例如116.162.152.187:443，其中116......就是ip地址，443就是跟我们建立连接的端口号，也就是我们的48400端口和对面的443端口建立了ipv4的tcp连接
+		state表示端口状态，LISTEN表示监听，ESTABLISHED表示成功建立连接，TIME_WAIT表示等待（tcp怕网络波动导致问题，所以不会直接关闭端口，而是等待一段时间）
+netstat -anp | grep sshd	找到sshd的连接
+ping IP地址或host别名		检查于目标IP的网络连接
+

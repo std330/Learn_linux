@@ -1,0 +1,20 @@
+centos系统 找回root密码--------------------------------------------------
+1,启动系统
+
+2,在开机选择界面按e（就是选择系统的界面，光标选中linux按下E键）
+(可能需要输入命令：:rd.break 进入系统后输入：chroot /sysroot）
+
+3,找到行：linux16 .vmlinuz-3.10.0-975.e17.x86_64 root=UUID=12ae1cc1-09e0-42ce-b6\59-063df3e7c941 ro rhgb quiet LANG=zn_CN.UTF-8
+
+4,在这一行的最后写入：init=/bin/sh 输入之后别回车 而是按下ctrl+x键 即可进入单用户模式
+
+5,在光标闪烁的位置输入：mount -o remount,rw/ 回车
+
+6,在新的一行输入：passwd 回车 之后输入新密码 再次确认新密码 如果显示passwd.....的样式即为成功
+
+7,在新的一行中输入：touch /.autorelabel 回车(注意touch后面有空格)
+
+8,在新的一行中输入：exec /sbin/init 回车（注意exec后有空格），等待系统重启（需要一段时间）
+
+9,重启后新密码就生效了
+

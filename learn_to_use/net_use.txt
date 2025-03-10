@@ -1,0 +1,72 @@
+安装net-tools包来获取ifconfig--------------------------------------------------------------
+sudo apt-get install net-tools
+
+查看网络信息--------------------------------------------------------------------------------
+ifconfig			查看linux网络信息
+ping 网址/ip地址		测试本机和目的主机的网络是否连接
+service network restart		在配置完网络后重启网络服务/当然重启机器也可以
+
+设置主机名和host映射-------------------------------------------------------------------------------
+vi /etc/hostname		修改主机名称（重启机器生效）
+hostname			查看当前主机名
+要想通过主机名去ping而不是ip地址去ping,需要我们对该ip设置host映射
+				所谓的host映射就是在通过主机名去ping的时候，系统会自动在host文件中查找该名称对应的ip地址，然后通过该地址进行访问或ping
+vi /etc/hosts			修改host映射来通过名称访问主机
+		例如如下的hosts文件内容：这里localhost名字就对应了127.0.0.1这个ip地址,所以ping localhost 就相当于 ping 127.0.0.1
+			127.0.0.1	localhost
+			127.0.1.1	LINUX-DEBIAN12-DESKTOP
+			# The following lines are desirable for IPv6 capable hosts
+			::1     localhost ip6-localhost ip6-loopback
+			ff02::1 ip6-allnodes
+			ff02::2 ip6-allrouters
+windows 中host文件在C:\Windows\System32\drivers\etc\hosts 这里修改host
+注意：通过hostname设置的主机名是本机的主机名，如果其他主机通过host映射访问，他们设置的主机名可以不和你设置的一样。即host映射相当于通过别名来代替ip地址，这样访问更加方便，所有host映射的名称和该ip地址的主机自己设置的hostname名称并无关系。(但我还是建议设置为相同名称）
+			例如：我linux中hostname文件写的主机名是DEBIAN_LINUX，ip地址是192.168.2.100（固定）
+			      另一台windows中设置的host为：192.168.2.100 debian_lin,那么windows中就可以通过debian_lin来访问linux,而不是DEBIAN_LINUX
+
+DNS域名解析详解-------------------------------------------------------------------------------
+域名解析			我们在访问某个网址或主机的时候，通常使用的是网址/主机名称来访问（因为这比ip地址更好记）
+				但是网络设备是通过ip地址来访问的，所以我们要把网址/主机名称与该设备的ip地址对应起来，这就是DNS域名解析
+浏览器的域名解析		浏览器域名解析一般有4步：
+					1,查看浏览器缓存中是否有该域名解析的ip地址
+					2,查看系统DNS解析缓存中是否有该域名解析的ip地址
+					3,在系统的hosts文件中查看是否有该域名解析的ip地址
+					4,通过设置的DNS解析服务器，到服务器中查询是否有该域名解析的ip地址
+查看系统DNS缓存			在Windows中使用cmd指令： ipconfig /displaydns 来查看系统DNS缓存
+				在Windows中使用cmd指令： ipconfig /flushdns 来清除DNS缓存
+DNS解析服务器			DNS解析服务器是一个服务器集群，通过一定的顺序在集群中查找该域名的解析ip地址
+DNS域名劫持			由于DNS解析的过程是有先后顺序的，所以当浏览器缓存/系统DNS缓存/host文件被恶意修改后
+				访问该网址/主机的时候就会访问的是假的网站/主机，这时候就危险了
+
+
+网络监控------------------------------------------------------------------------------------------------
+netstat 选项		查看系统网络情况
+			选项：	-an 按一定顺序排列输出
+				-p 显示哪个进程在调用
+			下面就是netstat的信息：
+			Active Internet connections (servers and established)
+			Proto Recv-Q Send-Q Local Address           Foreign Address         State      
+			tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN     
+			tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN     
+			tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN     
+			tcp        0      0 192.168.2.207:48400     116.162.152.187:443     ESTABLISHED
+			tcp        0      0 192.168.2.207:60786     221.15.71.65:443        ESTABLISHED
+			tcp        0      0 192.168.2.207:34752     27.222.0.173:7826       ESTABLISHED
+			tcp        0      0 192.168.2.207:59932     34.107.243.93:443       ESTABLISHED
+			tcp        0      0 192.168.2.207:43182     218.60.18.10:443        ESTABLISHED
+			tcp        0      0 192.168.2.207:43272     140.206.235.70:443      ESTABLISHED
+			tcp        0      0 192.168.2.207:59944     34.107.243.93:443       ESTABLISHED
+			tcp        0      0 192.168.2.207:58214     221.15.71.65:443        ESTABLISHED
+			tcp6       0      0 :::1716                 :::*                    LISTEN     
+			tcp6       0      0 :::22                   :::*                    LISTEN     
+			tcp6       0      0 :::80                   :::*                    LISTEN     
+			tcp6       0      0 ::1:631                 :::*                    LISTEN
+		proto表示使用的协议 tcp表示ipv4的tcp连接 tcp6表示使用的是ipv6的tcp连接,udp和udp6同理
+		local address表示本地建立连接的端口号
+		其中192.168.2.207:48400 其中48400就是端口号，下面:::22里面的22就是端口号（只不过是ipv6的形式），同一个端口可以接听多个连接。
+		foreign address表示连接到本地端口的对面的ip地址和端口号
+		例如116.162.152.187:443，其中116......就是ip地址，443就是跟我们建立连接的端口号，也就是我们的48400端口和对面的443端口建立了ipv4的tcp连接
+		state表示端口状态，LISTEN表示监听，ESTABLISHED表示成功建立连接，TIME_WAIT表示等待（tcp怕网络波动导致问题，所以不会直接关闭端口，而是等待一段时间）
+netstat -anp | grep sshd	找到sshd的连接
+ping IP地址或host别名		检查于目标IP的网络连接
+

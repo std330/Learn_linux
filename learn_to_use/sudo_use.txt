@@ -1,0 +1,38 @@
+sudo 是 super user do 的意思，表示以管理员权限运行指令
+
+在非root用户下，想要运行某些指令需要在前面加上sudo
+例如：	sudo fdisk -l	显示磁盘信息
+	sudo apt-get install ...	安装某软件包
+
+
+修改sudo配置文件--------------------------------------------------------------------------------------
+sudo的配置文件在/etc/sudoers这个文件中,注意要使用visudo文本编辑器来修改该文件（防止配置文件的格式被破坏）
+sudo cat /etc/sudoers		显示sudo配置文件内容
+sudo visudo /etc/sudoers	修改配置文件
+这里是sudoers的文件内容示例（刨去了部分注释）
+	root    ALL=(ALL:ALL) ALL
+	%sudo   ALL=(ALL:ALL) ALL
+	tom	ALL=(ALL:ALL) NOPASSWD: ALL
+	alice	ALL=(ALL) /usr/bin/apt update
+	limi	192.168.1.100=(std330) ALL
+		第一列指出对象是哪个用户或是组 比如root就是指该用户，%sudo就是指sudo这个组
+		第二列指出可以在那些主机上使用sudo，比如localhost这样的单主机名，或是192.168.1.100这样的具体主机IP,或使用ALL指适用于所有主机
+		第三列指出以什么样的身份执行命令，例如登陆的用户是limi,limi切换到了std330的身份就能使用sudo的所有指令,即=(std330)。如果是=(std330:GroupA) 表示limi这登陆用户要切换到std330身份且std330需要在组GroupA中才能使用sudo指令。ALL指可以在任何身份，任何组下运行sudo。
+		第四列指出每次使用sudo指令的时候是否需要输入密码，如果有NOPASSWD:表示使用sudo时不需要输入密码，如果没有NOPASSWD:则需要输入密码
+		第五列指出可以使用什么指令，ALL指的是可以使用所有所有指令，/usr/bin/apt update表示可以使用sudo apt update这个指令
+
+更多sudoers配置示例：
+	userA ALL=(std330) NOPASSWD: /bin/ls, /usr/bin/apt-get	表示userA可以在任何主机上使用std330身份运行sudo ls和sudo apt-get指令,不用输入密码
+	userA ALL=(tom) NOPASSWD: /bin/ls, /usr/bin/*		表示userA可以在任何主机上使用tom身份运行sudo ls和/usr/bin/里面的所有指令,不输密码
+	userB ALL=(ALL:ALL) /opt/app/bin/*			表示userB可以在任何主机上使用任何身份运行/opt/app/bin/里面的所有指令，输入密码
+	userC ALL=(tom) ALL,!/usr/bin/*				表示userC可以在任何主机上使用tom身份运行除了/use/bin/里面的指令以外的所有指令，输入密码
+	%GroupB localhost=(ALL:ALL) NOPASSWD: ALL,!/usr/bin/*	表示GroupB组的成员可以在localhost里以任何身份运行除了/usr/bin/以外的所有指令，不输密码
+
+
+常用指令----------------------------------------------------------------------------------
+由于sudo组有所有的sudo权限，所以一般把用户加入sudo组就好了
+usermod -aG sudo tom	将tom附加到sudo组中去（这样就有了sudo权限）
+			-G表示给用户的附加组设置为只有一个sudo -a表示不再是设置而是附加，附加一个sudo组到其附加组中去
+sudo vi /etc/group	修改组文件，将sudo组中去除tom
+usermod -G group1 tom	设置tom的附加组只有一个group1,其他的附加组会被删除
+
