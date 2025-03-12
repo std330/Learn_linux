@@ -1,0 +1,42 @@
+1,下载watt tookit linux安装包（最新版本）
+2，使用tar命令解压,或使用dpkg安装deb安装包
+	tar -xvf ...	解压到当前文件夹
+	dpkg -i ...deb	安装安装包
+3,打开解压后的scrips文件夹使用bash命令运行脚本
+	bash offline_init.sh	运行线下安装脚本
+	bash online_install.sh	运行线上安装脚本
+4,确定安装地址（略）
+	dpkg-deb -c ...deb	查看包的安装地址
+5,输入下面命令
+	curl -sSL https://steampp.net/Install/Linux.sh | bash
+	如果显示没有curl命令那么需要安装curl工具,同理安装certutil zenity jq工具
+	sudo apt install curl
+6,使用下面命令查看是否有字符集en_US.UTF-8
+	locale -a
+	如果没有使用下面的命令生产该字符集的locale文件
+	sudo localedef -i en_US -f UTF-8 en_US.UTF-8
+7,确保上面的几个工具和字符集都弄好了，并且安装完软件了，现在打开火狐浏览器
+	在设置-隐私与安全-安全-证书-查看证书 里 选择“证书颁发机构”
+	打开watt tookit 在设置中找到证书所在的文件夹，打开
+	在浏览器那个“证书颁发机构”那里添加，把watt的证书添加进去，并信任
+8,完成证书添加后，可能显示无法修改hosts文件
+	sudo chmod a+w /etc/hosts
+	sudo chmod a+r /etc/hosts	修改hosts文件的权限7,确保上面的几个工具和字符集都弄好了，并且安装完软件了，现在打开火狐浏览器
+	在设置-隐私与安全-安全-证书-查看证书 里 选择“证书颁发机构”
+	打开watt tookit 在设置中找到证书所在的文件夹，打开
+	在浏览器那个“证书颁发机构”那里添加，把watt的证书添加进去，并信任
+
+
+1,下载watt tookit linux安装包(已经使用过稳定的版本2.8.6）下载deb包
+2,使用dpkg安装deb安装包
+	dpkg -i ...deb	安装安装包
+3,确定安装地址
+	dpkg-deb -c ...deb	查看包的安装地址
+	dpkg -l | grep "steam++"	搜索deb安装包的信息
+	dpkg -L steam++		显示该安装包安装的文件夹
+4,在桌面新建快捷方式
+	ln -s /usr/share/Steam++/Steam++ /home/std330/桌面/WattTookit
+	这里使用的是ln -s 源文件地址 快捷方式地址 来生成快捷方式
+5,打开steam++（也就是watt tookit）
+6,7,8 同上
+
